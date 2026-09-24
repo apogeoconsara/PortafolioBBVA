@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Behavioral AI Studio</title>
+<meta name="description" content="Demo de portafolio: motor de segmentación conductual determinístico + razonamiento de IA opcional para banca. Datos 100% sintéticos.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+/* Design tokens --------------------------------------------------------
+   Dark, professional SaaS-dashboard aesthetic. Not a reproduction of any
+   real bank's brand system — a generic, banking-adjacent dark palette
+   (deep navy ground, cool blue accent, amber/red for risk states) chosen
+   to feel at home in an internal analytics console.
+------------------------------------------------------------------------- */
+:root {
+  --bg: #0B0F16;
+  --panel: #121826;
+  --panel-2: #1A2233;
+  --line: #26304485;
+  --line-solid: #26304485;
+  --text: #E7ECF5;
+  --muted: #90A0B7;
+  --muted-2: #64758C;
+  --accent: #4C8DFF;
+  --accent-dim: #1B2A4A;
+  --accent-text: #9CC0FF;
+  --good: #34D399;
+  --good-dim: #113328;
+  --warn: #F5B54C;
+  --warn-dim: #3A2E12;
+  --bad: #F0637A;
+  --bad-dim: #3A1620;
+  --tier-alta: #F0637A;
+  --tier-media: #F5B54C;
+  --tier-baja: #64758C;
+  --font-head: 'Inter', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Sans', sans-serif;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #0B0F16; --panel: #121826; --panel-2: #1A2233; --text: #E7ECF5; --muted: #90A0B7;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent-text); text-decoration: none; }
+::selection { background: var(--accent-dim); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
+.app { display: flex; min-height: 100vh; }
+
+/* --- Rail --- */
+.rail {
+  width: 252px; flex-shrink: 0;
+  background: #0D1220; border-right: 1px solid var(--line-solid);
+  padding: 22px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.rail-brand { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--text); display:flex; align-items:center; gap:8px; }
+.rail-brand .dot-logo { width: 9px; height: 9px; border-radius: 3px; background: var(--accent); display:inline-block; }
+.rail-sub { color: var(--muted); font-size: 11.5px; margin: 4px 0 14px; line-height: 1.4; }
+.rail-badge {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); color: var(--accent-text);
+  font-size: 11px; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px;
+}
+.rail-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-text); }
+.rail-badge.synthetic { background: var(--warn-dim); color: var(--warn); }
+.rail-badge.synthetic::before { background: var(--warn); }
+.rail nav { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; }
+.rail nav button {
+  all: unset; cursor: pointer; color: var(--muted); font-size: 13.3px; font-weight: 500;
+  padding: 9px 10px; border-radius: 6px; display: flex; align-items: center; gap: 9px;
+}
+.rail nav button:hover { background: var(--panel-2); color: var(--text); }
+.rail nav button.active { background: var(--panel-2); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
+.rail nav button .n { width: 18px; height: 18px; border-radius: 5px; background: var(--panel-2); display:inline-flex; align-items:center; justify-content:center; font-size: 10.5px; font-weight:700; color: var(--muted); flex-shrink:0; }
+.rail nav button.active .n { background: var(--accent); color: #071022; }
+.rail-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-solid); color: var(--muted-2); font-size: 10.8px; line-height: 1.5; }
+
+/* --- Main --- */
+.main { flex: 1; min-width: 0; padding: 28px 36px 70px; max-width: 1240px; }
+.page-head { margin-bottom: 22px; }
+.page-head h1 { font-family: var(--font-head); font-size: 21px; margin: 0 0 5px; font-weight: 650; }
+.page-head p { color: var(--muted); margin: 0; max-width: 760px; font-size: 13px; }
+
+.disclaimer-bar {
+  background: var(--warn-dim); border: 1px solid #5C4A1F; color: var(--warn);
+  border-radius: 8px; padding: 10px 14px; font-size: 12.3px; margin-bottom: 20px; line-height: 1.5;
+}
+.disclaimer-bar b { color: #FFD98A; }
+
+/* --- KPI grid --- */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+.kpi { background: var(--panel); border: 1px solid var(--line-solid); border-radius: 10px; padding: 15px 16px 13px; }
+.kpi .v { font-family: var(--font-head); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi .l { color: var(--muted); font-size: 11.5px; margin-top: 4px; }
+.kpi .v.alta { color: var(--tier-alta); }
+.kpi .v.media { color: var(--tier-media); }
+.kpi .v.baja { color: var(--tier-baja); }
+
+/* --- Panels / tables --- */
+.panel { background: var(--panel); border: 1px solid var(--line-solid); border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; padding: 13px 16px; border-bottom: 1px solid var(--line-solid); gap: 12px; flex-wrap: wrap; }
+.panel-head h2 { font-family: var(--font-head); font-size: 13.5px; font-weight: 650; margin: 0; }
+.panel-head .hint { color: var(--muted); font-size: 11.8px; }
+.panel-body { padding: 16px; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 11px; color: var(--muted); font-weight: 500; padding: 9px 16px; border-bottom: 1px solid var(--line-solid); text-transform: uppercase; letter-spacing: .03em; }
+td { padding: 10px 16px; border-bottom: 1px solid var(--line-solid); font-size: 13px; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--panel-2); }
+
+.pill { display: inline-flex; align-items: center; justify-content: center; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 650; }
+.pill.alta { background: var(--bad-dim); color: var(--tier-alta); }
+.pill.media { background: var(--warn-dim); color: var(--tier-media); }
+.pill.baja { background: #1B2432; color: var(--tier-baja); }
+
+.tag { font-size: 11px; color: var(--muted); background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 4px; padding: 2px 7px; display: inline-block; }
+.chip { display:inline-flex; align-items:center; gap:5px; background: var(--panel-2); border:1px solid var(--line-solid); border-radius: 20px; padding: 3px 10px; font-size: 11.5px; color: var(--text); }
+.chip b { color: var(--accent-text); }
+
+.btn { all: unset; cursor: pointer; background: var(--accent); color: #071022; font-weight: 650; font-size: 12.8px; padding: 8px 14px; border-radius: 7px; display:inline-flex; align-items:center; gap:7px; }
+.btn:hover { filter: brightness(1.08); }
+.btn.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line-solid); }
+.btn.ai { background: linear-gradient(135deg, #6C5CE7, #4C8DFF); color: #fff; }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn.small { padding: 6px 11px; font-size: 11.8px; }
+
+.grid-2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; align-items: start; }
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+
+.card { background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 9px; padding: 14px; }
+.card h3 { margin: 0 0 6px; font-size: 13.5px; font-family: var(--font-head); font-weight: 650; }
+.card p { margin: 0; color: var(--muted); font-size: 12.3px; }
+
+.construct-card { background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 9px; padding: 14px; display:flex; flex-direction:column; gap:8px; }
+.construct-card .cname { font-family: var(--font-head); font-weight: 650; font-size: 13.8px; }
+.construct-card .provenance { color: var(--accent-text); font-size: 11px; }
+.construct-card .row-label { color: var(--muted); font-size: 10.6px; text-transform: uppercase; letter-spacing: .03em; margin-top: 4px; }
+.construct-card .row-value { font-size: 12.4px; }
+
+.evidence-line { display:flex; align-items:flex-start; gap:8px; padding: 8px 0; border-bottom: 1px dashed var(--line-solid); font-size: 12.6px; }
+.evidence-line:last-child { border-bottom: none; }
+.evidence-line .strength { font-family: var(--font-head); font-weight: 700; min-width: 34px; color: var(--accent-text); }
+.evidence-line .body b { color: var(--text); }
+.evidence-line .body .ev { color: var(--muted); }
+
+.fact-tag, .inference-tag { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 4px; margin-right: 6px; letter-spacing: .03em; }
+.fact-tag { background: var(--good-dim); color: var(--good); }
+.inference-tag { background: var(--warn-dim); color: var(--warn); }
+
+.rule-fired { background: var(--accent-dim); border: 1px solid #2E4B85; border-radius: 8px; padding: 10px 12px; font-size: 12.4px; color: var(--accent-text); margin-bottom: 12px; }
+.rule-fired code { background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+
+.field-row { display:flex; align-items:center; justify-content:space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-solid); font-size: 12.6px; }
+.field-row:last-child { border-bottom: none; }
+.field-row .k { color: var(--muted); }
+.field-row .v { font-weight: 600; }
+
+.config-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: 14px; }
+.config-item label { display:block; font-size: 11.5px; color: var(--muted); margin-bottom: 5px; }
+.config-item input[type=number] { width: 100%; background: var(--panel); border: 1px solid var(--line-solid); color: var(--text); padding: 7px 9px; border-radius: 6px; font-size: 13px; }
+.config-item input[type=range] { width: 100%; }
+
+select {
+  width: 100%; background: var(--panel); border: 1px solid var(--line-solid); color: var(--text);
+  padding: 8px 10px; border-radius: 7px; font-size: 13px;
+}
+
+.risk-badge { padding: 2px 9px; border-radius: 20px; font-size: 10.8px; font-weight: 700; }
+.risk-badge.bajo { background: var(--good-dim); color: var(--good); }
+.risk-badge.medio { background: var(--warn-dim); color: var(--warn); }
+.risk-badge.alto { background: var(--bad-dim); color: var(--tier-alta); }
+
+.scatter { position: relative; width: 100%; height: 360px; background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 9px; overflow: hidden; }
+.scatter .axis-label { position:absolute; color: var(--muted); font-size: 11px; }
+.scatter .bubble { position:absolute; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 10px; font-weight: 700; color: #071022; cursor: default; border: 2px solid rgba(0,0,0,.25); }
+.scatter .gridline { position:absolute; background: var(--line-solid); }
+
+.hidden { display: none !important; }
+.section { display: none; }
+.section.active { display: block; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+
+.small-note { color: var(--muted-2); font-size: 11.3px; }
+
+.ai-result { background: #0F1522; border: 1px solid #2E3A55; border-radius: 9px; padding: 14px; margin-top: 12px; }
+.ai-result .meta-row { display:flex; gap: 14px; flex-wrap:wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-solid); font-size: 11.3px; color: var(--muted); }
+.ai-error { background: var(--bad-dim); border: 1px solid #5C2532; color: var(--tier-alta); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-top: 10px; }
+
+.assembled-box { background: #0F1522; border: 1px solid #2E3A55; border-radius: 9px; padding: 16px; margin-top: 14px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+
+.progress-track { background: var(--panel); border-radius: 6px; height: 7px; overflow:hidden; margin-top: 5px; }
+.progress-fill { height: 100%; background: var(--accent); }
+
+@media (max-width: 900px) {
+  .app { flex-direction: column; }
+  .rail { width: 100%; height: auto; position: relative; }
+  .main { padding: 20px 16px 50px; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .grid-2, .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="rail-brand"><span class="dot-logo"></span>Behavioral AI Studio</div>
+    <div class="rail-sub">Demo de portafolio para el rol de Behavioral AI Lead — no es un proyecto activo de ningún banco.</div>
+    <div class="rail-badge synthetic">100% datos sintéticos</div>
+    <div class="rail-badge">Motor determinístico + IA opcional</div>
+    <nav id="nav"></nav>
+    <div class="rail-foot">
+      Ningún dato de esta demo pertenece a un cliente real. Ver el panel "Responsabilidad de IA" y el README para el detalle de honestidad y arquitectura.
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<script>
+/* =========================================================================
+   BEHAVIORAL AI STUDIO — motor determinístico + panel de IA opcional
+   Todo el dato de clientes es sintético/ficticio. Ver README para el
+   deslinde completo de qué es prototipo real vs. diseño de producción.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------
+   1) BIBLIOTECA DE SESGOS / CONSTRUCTOS DE COMPORTAMIENTO (reutilizable)
+   ------------------------------------------------------------------- */
+const CONSTRUCTS = [
+  { id:"loss_aversion", name:"Aversión a la pérdida", provenance:"Kahneman & Tversky — teoría de las perspectivas (1979)",
+    definition:"Una pérdida duele psicológicamente más de lo que place una ganancia equivalente del mismo tamaño.",
+    proxy:"Frecuencia de sobregiros y retiros de emergencia frente a la velocidad con la que se repone el saldo tras un excedente.",
+    nudge:"Enmarcar el costo de no actuar como una pérdida concreta ya incurrida (ej. \"perdiste $X en comisiones\") en vez de una ganancia potencial futura." },
+  { id:"present_bias", name:"Sesgo del presente / descuento hiperbólico", provenance:"Laibson (1997); Thaler (1981)",
+    definition:"Preferencia desproporcionada por una recompensa inmediata pequeña sobre un beneficio mayor pero futuro.",
+    proxy:"Meses consecutivos pagando solo el pago mínimo de una tarjeta de crédito pese a tener capacidad de pagar más.",
+    nudge:"Compromiso diferido: programar hoy un incremento automático del pago que se activa en 60 días, con opción de cancelarlo antes." },
+  { id:"default_effect", name:"Efecto del default (opción preseleccionada)", provenance:"Johnson & Goldstein (2003); Thaler & Sunstein, \"Nudge\" (2008)",
+    definition:"La opción preconfigurada se elige con mucha mayor frecuencia que si el usuario tuviera que activarla manualmente.",
+    proxy:"Tasa de enrolamiento en ahorro automático o redondeo cuando la activación es opt-in vs. cuando viene activada por defecto (opt-out).",
+    nudge:"Cambiar el ahorro automático de opt-in a opt-out con un monto inicial pequeño y una salida de un clic siempre visible." },
+  { id:"social_proof", name:"Prueba social", provenance:"Cialdini, \"Influence\" (1984)",
+    definition:"Las personas imitan el comportamiento que observan en otras personas, especialmente en pares similares a ellas.",
+    proxy:"Tasa de activación de una función financiera tras mostrar el porcentaje de clientes similares que ya la usan.",
+    nudge:"Comparativas normativas honestas (\"7 de cada 10 clientes de tu rango de edad ya activaron el ahorro automático\"), nunca cifras infladas." },
+  { id:"anchoring", name:"Anclaje", provenance:"Tversky & Kahneman (1974)",
+    definition:"Un juicio numérico queda sesgado hacia el primer valor presentado, aunque ese valor sea arbitrario.",
+    proxy:"Relación entre el \"pago sugerido\" mostrado primero en el estado de cuenta y el monto que el cliente termina pagando.",
+    nudge:"Mostrar un pago sugerido saludable (p. ej. 3 veces el mínimo legal) como ancla visual antes del monto de pago mínimo." },
+  { id:"mental_accounting", name:"Contabilidad mental", provenance:"Thaler (1985, 1999)",
+    definition:"El dinero se trata de forma distinta según la \"cuenta mental\" a la que la persona lo asigna, en vez de tratarlo como fungible.",
+    proxy:"Retiros de una cuenta de ahorro etiquetada (p. ej. \"vacaciones\") para cubrir gasto corriente no relacionado.",
+    nudge:"Reforzar visualmente la etiqueta y el propósito de la meta en cada resumen de cuenta, para fortalecer la barrera mental frente al retiro." },
+  { id:"commitment_devices", name:"Dispositivos de compromiso", provenance:"Thaler & Shefrin (1981); Ariely & Wertenbroch (2002)",
+    definition:"Acuerdos que una persona hace consigo misma para atarse a una meta futura, limitando su propia flexibilidad de forma voluntaria.",
+    proxy:"Adopción de metas de ahorro con una restricción de retiro anticipado o penalización auto-impuesta y voluntaria.",
+    nudge:"Ofrecer un \"candado de meta\" opcional (bloqueo parcial y temporal, reversible) al momento de crear una meta de ahorro." },
+  { id:"salience_bias", name:"Sesgo de saliencia", provenance:"Bordalo, Gennaioli & Shleifer — teoría de la saliencia (2012)",
+    definition:"La atención se dirige de forma desproporcionada a la información más llamativa o visible, no a la más relevante.",
+    proxy:"Crecimiento neto de cargos recurrentes/suscripciones pequeñas que pasan desapercibidas frente a un solo cargo grande y visible.",
+    nudge:"Mostrar un resumen mensual agregado del total de cargos recurrentes, en vez de cada cargo pequeño por separado y disperso." },
+  { id:"endowment_effect", name:"Efecto de dotación", provenance:"Kahneman, Knetsch & Thaler (1990)",
+    definition:"Un bien se valora más por el simple hecho de poseerlo, comparado con adquirir ese mismo bien desde cero.",
+    proxy:"Resistencia a migrar a un producto objetivamente mejor una vez que el cliente ya tiene contratado el producto actual.",
+    nudge:"Enmarcar el cambio de producto como \"actualizar lo que ya tienes\" en vez de \"cambiar a algo nuevo\"." },
+  { id:"status_quo_bias", name:"Sesgo de statu quo", provenance:"Samuelson & Zeckhauser (1988)",
+    definition:"Preferencia por mantener la situación actual incluso cuando existen alternativas mejores y de bajo costo de cambio.",
+    proxy:"Días sin ningún movimiento (depósito, retiro o edición) en una meta de ahorro que el cliente sí creó activamente.",
+    nudge:"Recordatorio de reactivación con una sola acción de un clic para reanudar la aportación mensual con el monto anterior." },
+  { id:"framing_effect", name:"Efecto de encuadre (framing)", provenance:"Tversky & Kahneman (1981)",
+    definition:"La misma información, presentada como ganancia o como pérdida, cambia sistemáticamente la decisión tomada.",
+    proxy:"Diferencia de tasa de respuesta entre un mensaje en términos de ganancia (\"ahorra $X\") y uno en términos de pérdida (\"dejas de ganar $X\").",
+    nudge:"Usar encuadre de pérdida solo para audiencias con aversión a la pérdida ya detectada; encuadre de ganancia para el resto." },
+  { id:"peak_end_rule", name:"Regla pico-final", provenance:"Kahneman et al. (Fredrickson & Kahneman, 1993)",
+    definition:"Una experiencia se evalúa sobre todo por su punto más intenso y por cómo termina, no por su promedio.",
+    proxy:"Si el cierre de un proceso (p. ej. completar una meta de ahorro) se comunica con un momento destacado o pasa como un aviso transaccional más.",
+    nudge:"Diseñar un momento de cierre explícito y celebratorio al alcanzar una meta, distinto de una notificación transaccional genérica." },
+  { id:"goal_gradient_effect", name:"Efecto de gradiente de meta", provenance:"Hull (1932); Kivetz, Urminsky & Zheng (2006)",
+    definition:"El esfuerzo y la motivación aumentan a medida que la persona percibe que se acerca más a completar una meta.",
+    proxy:"Aceleración de los depósitos hacia una meta de ahorro conforme el porcentaje de avance sube, especialmente después del 60-70%.",
+    nudge:"Mostrar una barra de progreso con el monto exacto que falta cerca del final (\"ya vas al 85%, faltan $X\") para capitalizar el impulso." },
+  { id:"choice_overload", name:"Sobrecarga de opciones", provenance:"Iyengar & Lepper (2000)",
+    definition:"Demasiadas opciones simultáneas reducen la probabilidad de decidir y la satisfacción con la decisión tomada.",
+    proxy:"Tasa de abandono en pantallas que muestran más de 5-6 opciones de producto o plan al mismo tiempo.",
+    nudge:"Reducir el menú visible a 3 opciones curadas por defecto (\"recomendado para ti\"), con un enlace opcional a \"ver todas\"." },
+  { id:"affect_heuristic", name:"Heurística del afecto", provenance:"Slovic, Finucane, Peters & MacGregor (2002)",
+    definition:"Las decisiones se basan en la reacción emocional inmediata (\"me gusta / no me gusta\") más que en un análisis costo-beneficio explícito.",
+    proxy:"Aumento de gasto concentrado en los días inmediatamente posteriores a la fecha de pago de nómina, comparado con el promedio diario del mes.",
+    nudge:"Evitar mensajes con carga emocional negativa (miedo, urgencia artificial) al recomendar productos; usar tono neutro e informativo con datos verificables." }
+];
+const CONSTRUCT_BY_ID = Object.fromEntries(CONSTRUCTS.map(c => [c.id, c]));
+
+/* ---------------------------------------------------------------------
+   2) DATASET SINTÉTICO DE CLIENTES (100% ficticio — ver README)
+   ------------------------------------------------------------------- */
+const CUSTOMERS = [
+  { id:"cs_01", first_name:"Ana", last_name:"Martínez López", age:34, tenure_months:26, income_band:"Medio",
+    metrics:{ min_payment_streak_months:5, credit_utilization_pct:82, overdraft_events_90d:0, late_payment_events_90d:1,
+      savings_goal_dormant_days:null, autosave_enrolled:true, roundup_enabled:true, goal_progress_pct:null,
+      new_subscriptions_90d:2, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.5 } },
+  { id:"cs_02", first_name:"Jorge", last_name:"Hernández Ruiz", age:29, tenure_months:14, income_band:"Bajo",
+    metrics:{ min_payment_streak_months:1, credit_utilization_pct:40, overdraft_events_90d:3, late_payment_events_90d:2,
+      savings_goal_dormant_days:null, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:2.1 } },
+  { id:"cs_03", first_name:"María Fernanda", last_name:"Gómez Paredes", age:41, tenure_months:52, income_band:"Medio",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:20, overdraft_events_90d:0, late_payment_events_90d:0,
+      savings_goal_dormant_days:120, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:35,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:1, payday_spike_ratio:1.1 } },
+  { id:"cs_04", first_name:"Luis Alberto", last_name:"Sánchez Ibarra", age:37, tenure_months:33, income_band:"Alto",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:25, overdraft_events_90d:1, late_payment_events_90d:1,
+      savings_goal_dormant_days:null, autosave_enrolled:true, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:3, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.2 } },
+  { id:"cs_05", first_name:"Daniela", last_name:"Torres Ibarra", age:31, tenure_months:19, income_band:"Medio",
+    metrics:{ min_payment_streak_months:1, credit_utilization_pct:30, overdraft_events_90d:0, late_payment_events_90d:0,
+      savings_goal_dormant_days:5, autosave_enrolled:false, roundup_enabled:true, goal_progress_pct:85,
+      new_subscriptions_90d:1, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.0 } },
+  { id:"cs_06", first_name:"Roberto", last_name:"Castillo Vega", age:45, tenure_months:60, income_band:"Medio",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:15, overdraft_events_90d:1, late_payment_events_90d:0,
+      savings_goal_dormant_days:null, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.5 } },
+  { id:"cs_07", first_name:"Sofía", last_name:"Ramírez Ortiz", age:28, tenure_months:22, income_band:"Alto",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:18, overdraft_events_90d:0, late_payment_events_90d:0,
+      savings_goal_dormant_days:10, autosave_enrolled:true, roundup_enabled:true, goal_progress_pct:68,
+      new_subscriptions_90d:1, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.45 } },
+  { id:"cs_08", first_name:"Miguel Ángel", last_name:"Flores Camacho", age:39, tenure_months:41, income_band:"Bajo",
+    metrics:{ min_payment_streak_months:6, credit_utilization_pct:90, overdraft_events_90d:1, late_payment_events_90d:2,
+      savings_goal_dormant_days:null, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.9 } },
+  { id:"cs_09", first_name:"Patricia", last_name:"Morales Cano", age:33, tenure_months:18, income_band:"Medio",
+    metrics:{ min_payment_streak_months:1, credit_utilization_pct:35, overdraft_events_90d:2, late_payment_events_90d:1,
+      savings_goal_dormant_days:null, autosave_enrolled:false, roundup_enabled:true, goal_progress_pct:null,
+      new_subscriptions_90d:1, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.7 } },
+  { id:"cs_10", first_name:"Fernando", last_name:"Reyes Aguilar", age:50, tenure_months:80, income_band:"Medio",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:22, overdraft_events_90d:0, late_payment_events_90d:0,
+      savings_goal_dormant_days:200, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:20,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:2, payday_spike_ratio:1.1 } },
+  { id:"cs_11", first_name:"Karla", last_name:"Jiménez Soto", age:26, tenure_months:9, income_band:"Bajo",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:28, overdraft_events_90d:0, late_payment_events_90d:1,
+      savings_goal_dormant_days:null, autosave_enrolled:true, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:4, cancelled_subscriptions_90d:1, withdrawal_from_goal_90d:0, payday_spike_ratio:1.45 } },
+  { id:"cs_12", first_name:"Diego", last_name:"Vargas Núñez", age:36, tenure_months:29, income_band:"Alto",
+    metrics:{ min_payment_streak_months:1, credit_utilization_pct:33, overdraft_events_90d:0, late_payment_events_90d:0,
+      savings_goal_dormant_days:8, autosave_enrolled:false, roundup_enabled:true, goal_progress_pct:72,
+      new_subscriptions_90d:1, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.0 } },
+  { id:"cs_13", first_name:"Alejandra", last_name:"Cruz Medina", age:48, tenure_months:65, income_band:"Medio",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:12, overdraft_events_90d:1, late_payment_events_90d:0,
+      savings_goal_dormant_days:null, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.5 } },
+  { id:"cs_14", first_name:"Ricardo", last_name:"Domínguez Paz", age:30, tenure_months:16, income_band:"Alto",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:19, overdraft_events_90d:1, late_payment_events_90d:0,
+      savings_goal_dormant_days:15, autosave_enrolled:true, roundup_enabled:true, goal_progress_pct:65,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:1, withdrawal_from_goal_90d:0, payday_spike_ratio:1.45 } },
+  { id:"cs_15", first_name:"Valeria", last_name:"Guerrero Luna", age:44, tenure_months:55, income_band:"Bajo",
+    metrics:{ min_payment_streak_months:4, credit_utilization_pct:75, overdraft_events_90d:1, late_payment_events_90d:1,
+      savings_goal_dormant_days:null, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.6 } },
+  { id:"cs_16", first_name:"Emilio", last_name:"Navarro Campos", age:27, tenure_months:11, income_band:"Medio",
+    metrics:{ min_payment_streak_months:1, credit_utilization_pct:38, overdraft_events_90d:2, late_payment_events_90d:0,
+      savings_goal_dormant_days:null, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:null,
+      new_subscriptions_90d:1, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.8 } },
+  { id:"cs_17", first_name:"Gabriela", last_name:"Salinas Rojas", age:38, tenure_months:47, income_band:"Medio",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:24, overdraft_events_90d:0, late_payment_events_90d:0,
+      savings_goal_dormant_days:95, autosave_enrolled:false, roundup_enabled:false, goal_progress_pct:55,
+      new_subscriptions_90d:0, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:1, payday_spike_ratio:1.2 } },
+  { id:"cs_18", first_name:"Andrés", last_name:"Pineda Contreras", age:32, tenure_months:24, income_band:"Alto",
+    metrics:{ min_payment_streak_months:0, credit_utilization_pct:27, overdraft_events_90d:0, late_payment_events_90d:0,
+      savings_goal_dormant_days:3, autosave_enrolled:true, roundup_enabled:true, goal_progress_pct:90,
+      new_subscriptions_90d:1, cancelled_subscriptions_90d:0, withdrawal_from_goal_90d:0, payday_spike_ratio:1.45 } }
+];
+
+/* ---------------------------------------------------------------------
+   3) CONFIGURACIÓN EDITABLE EN VIVO (pesos / umbrales del motor)
+   ------------------------------------------------------------------- */
+const CONFIG = {
+  signal_strength_min: 20,
+  rule_min_payment_streak: 4,
+  rule_credit_utilization: 70,
+  rule_overdraft_events: 2,
+  rule_dormant_days: 90,
+  rule_subscription_net: 2,
+  rule_goal_progress_min: 70,
+  init_w_impact: 0.40,
+  init_w_alignment: 0.35,
+  init_w_complexity: 0.25
+};
+
+/* ---------------------------------------------------------------------
+   4) MOTOR DE SEÑALES — puramente determinístico, fórmulas documentadas
+   ------------------------------------------------------------------- */
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+
+function computeSignals(m) {
+  const out = [];
+  const presentBias = clamp(m.min_payment_streak_months*15 + Math.max(0, m.credit_utilization_pct-50), 0, 100);
+  if (presentBias >= CONFIG.signal_strength_min) out.push({ construct:"present_bias", strength: Math.round(presentBias),
+    evidence: `${m.min_payment_streak_months} meses seguidos con solo pago mínimo, utilización de crédito ${m.credit_utilization_pct}%.`,
+    formula: "min(100, meses_pago_minimo×15 + max(0, utilizacion% − 50))" });
+
+  const lossAversion = clamp(m.overdraft_events_90d*30 + m.late_payment_events_90d*12, 0, 100);
+  if (lossAversion >= CONFIG.signal_strength_min) out.push({ construct:"loss_aversion", strength: Math.round(lossAversion),
+    evidence: `${m.overdraft_events_90d} sobregiros y ${m.late_payment_events_90d} pagos tardíos en los últimos 90 días.`,
+    formula: "min(100, sobregiros_90d×30 + pagos_tardios_90d×12)" });
+
+  const statusQuo = m.savings_goal_dormant_days ? clamp(m.savings_goal_dormant_days/2.5, 0, 100) : 0;
+  if (statusQuo >= CONFIG.signal_strength_min) out.push({ construct:"status_quo_bias", strength: Math.round(statusQuo),
+    evidence: `Meta de ahorro sin ningún movimiento desde hace ${m.savings_goal_dormant_days} días.`,
+    formula: "min(100, dias_meta_dormida / 2.5)" });
+
+  const net = m.new_subscriptions_90d - m.cancelled_subscriptions_90d;
+  const salience = clamp(Math.max(0, net)*28, 0, 100);
+  if (salience >= CONFIG.signal_strength_min) out.push({ construct:"salience_bias", strength: Math.round(salience),
+    evidence: `${m.new_subscriptions_90d} cargos recurrentes nuevos vs. ${m.cancelled_subscriptions_90d} cancelados en 90 días.`,
+    formula: "min(100, max(0, suscripciones_nuevas_90d − suscripciones_canceladas_90d)×28)" });
+
+  let goalGradient = 0;
+  if (m.goal_progress_pct != null) goalGradient = m.goal_progress_pct >= 60 ? m.goal_progress_pct : m.goal_progress_pct*0.3;
+  if (goalGradient >= CONFIG.signal_strength_min) out.push({ construct:"goal_gradient_effect", strength: Math.round(goalGradient),
+    evidence: `Meta de ahorro activa al ${m.goal_progress_pct}% de avance.`,
+    formula: "avance% si avance% ≥ 60, si no avance%×0.3" });
+
+  const noGoalAtAll = (m.goal_progress_pct == null && m.savings_goal_dormant_days == null);
+  const defaultEff = (m.autosave_enrolled ? 0 : 40) + (m.roundup_enabled ? 0 : 30) + (noGoalAtAll ? 20 : 0);
+  if (defaultEff >= CONFIG.signal_strength_min) out.push({ construct:"default_effect", strength: Math.round(clamp(defaultEff,0,100)),
+    evidence: `Ahorro automático ${m.autosave_enrolled ? "activo" : "inactivo"}, redondeo ${m.roundup_enabled ? "activo" : "inactivo"}${noGoalAtAll ? ", sin ninguna meta creada" : ""}.`,
+    formula: "(¬autosave)×40 + (¬redondeo)×30 + (sin_meta_alguna)×20" });
+
+  const mentalAcc = clamp((m.withdrawal_from_goal_90d||0)*35, 0, 100);
+  if (mentalAcc >= CONFIG.signal_strength_min) out.push({ construct:"mental_accounting", strength: Math.round(mentalAcc),
+    evidence: `${m.withdrawal_from_goal_90d} retiro(s) de una meta de ahorro etiquetada en los últimos 90 días.`,
+    formula: "min(100, retiros_de_meta_90d×35)" });
+
+  const affect = m.payday_spike_ratio > 1.4 ? clamp((m.payday_spike_ratio-1)*55, 0, 100) : 0;
+  if (affect >= CONFIG.signal_strength_min) out.push({ construct:"affect_heuristic", strength: Math.round(affect),
+    evidence: `Gasto en días posteriores a nómina es ${m.payday_spike_ratio.toFixed(2)}× el promedio diario del mes.`,
+    formula: "si payday_ratio > 1.4: min(100, (payday_ratio − 1)×55), si no 0" });
+
+  out.sort((a,b) => b.strength - a.strength);
+  return out.slice(0, 5);
+}
+
+/* ---------------------------------------------------------------------
+   5) MOTOR DE SEGMENTACIÓN — reglas en orden de prioridad, auditable
+   ------------------------------------------------------------------- */
+const NUDGE_TEMPLATES = {
+  compromiso_pago_futuro: { construct:"present_bias", label:"Compromiso de pago futuro (Save-More-Tomorrow adaptado)",
+    text: (m) => `Detectamos ${m.min_payment_streak_months} meses seguidos pagando solo el mínimo de tu tarjeta, con un uso de línea del ${m.credit_utilization_pct}%. Te proponemos programar hoy un incremento automático de tu pago dentro de 60 días. Puedes cancelarlo cuando quieras; si no decides nada, el incremento se aplica solo.` },
+  colchon_automatico_default: { construct:"loss_aversion", label:"Colchón automático por default",
+    text: (m) => `En los últimos 90 días tuviste ${m.overdraft_events_90d} sobregiro(s). Activa una transferencia automática de respaldo desde tu ahorro cuando tu saldo baje de un umbral que tú definas, para evitar la comisión y el costo de quedarte en números rojos.` },
+  reactivacion_un_clic: { construct:"status_quo_bias", label:"Reactivación de un clic",
+    text: (m) => `Tu meta de ahorro lleva ${m.savings_goal_dormant_days} días sin movimiento. Retomarla es un clic: reactiva tu aportación mensual con el mismo monto de antes, sin tener que configurar nada de nuevo.` },
+  resumen_cargos_recurrentes: { construct:"salience_bias", label:"Resumen agregado de cargos recurrentes",
+    text: (m) => `En los últimos 90 días se activaron ${m.new_subscriptions_90d} cargo(s) recurrente(s) nuevos. Aquí tienes el total acumulado mensual (no cargo por cargo) para que decidas de un vistazo cuáles siguen aportándote valor.` },
+  impulso_tramo_final: { construct:"goal_gradient_effect", label:"Impulso de tramo final",
+    text: (m) => `¡Vas al ${m.goal_progress_pct}% de tu meta de ahorro! Con un solo abono extra podrías completarla antes de lo previsto.` },
+  activar_ahorro_opt_out: { construct:"default_effect", label:"Activación de ahorro por default (opt-out)",
+    text: () => `Aún no tienes ahorro automático activo. Te proponemos comenzar con un apartado pequeño y ajustable, ya activado por default; puedes desactivarlo cuando quieras, pero así no depende de que te acuerdes cada mes.` },
+  mantenimiento_positivo: { construct:"affect_heuristic", label:"Refuerzo positivo de mantenimiento",
+    text: () => `Tu comportamiento financiero se ve estable. Te enviamos un resumen mensual de logros como refuerzo positivo, sin necesidad de una intervención correctiva.` }
+};
+
+const RULES = [
+  { id:"R1", segment:"Deuda revolvente crónica", priority:"Alta", nudge:"compromiso_pago_futuro",
+    describe: () => `min_payment_streak_months ≥ ${CONFIG.rule_min_payment_streak} Y credit_utilization_pct ≥ ${CONFIG.rule_credit_utilization}`,
+    test: (m) => m.min_payment_streak_months >= CONFIG.rule_min_payment_streak && m.credit_utilization_pct >= CONFIG.rule_credit_utilization },
+  { id:"R2", segment:"Riesgo de sobregiro recurrente", priority:"Alta", nudge:"colchon_automatico_default",
+    describe: () => `overdraft_events_90d ≥ ${CONFIG.rule_overdraft_events}`,
+    test: (m) => m.overdraft_events_90d >= CONFIG.rule_overdraft_events },
+  { id:"R3", segment:"Meta de ahorro abandonada", priority:"Media", nudge:"reactivacion_un_clic",
+    describe: () => `savings_goal_dormant_days ≥ ${CONFIG.rule_dormant_days} Y autosave_enrolled = false`,
+    test: (m) => m.savings_goal_dormant_days >= CONFIG.rule_dormant_days && m.autosave_enrolled === false },
+  { id:"R4", segment:"Gasto en suscripciones creciente", priority:"Media", nudge:"resumen_cargos_recurrentes",
+    describe: () => `(new_subscriptions_90d − cancelled_subscriptions_90d) ≥ ${CONFIG.rule_subscription_net}`,
+    test: (m) => (m.new_subscriptions_90d - m.cancelled_subscriptions_90d) >= CONFIG.rule_subscription_net },
+  { id:"R5", segment:"Cerca de la meta (impulso final)", priority:"Media", nudge:"impulso_tramo_final",
+    describe: () => `goal_progress_pct entre ${CONFIG.rule_goal_progress_min} y 99`,
+    test: (m) => m.goal_progress_pct != null && m.goal_progress_pct >= CONFIG.rule_goal_progress_min && m.goal_progress_pct < 100 },
+  { id:"R6", segment:"Sin hábito de ahorro automático", priority:"Baja", nudge:"activar_ahorro_opt_out",
+    describe: () => `autosave_enrolled = false Y roundup_enabled = false Y sin ninguna meta creada`,
+    test: (m) => m.autosave_enrolled === false && m.roundup_enabled === false && m.savings_goal_dormant_days == null && m.goal_progress_pct == null },
+  { id:"R7", segment:"Comportamiento financiero estable", priority:"Baja", nudge:"mantenimiento_positivo",
+    describe: () => `Ninguna de las reglas anteriores aplica (fallback)`,
+    test: () => true }
+];
+
+function segmentCustomer(customer) {
+  const m = customer.metrics;
+  for (const rule of RULES) {
+    if (rule.test(m)) {
+      return { rule_id: rule.id, rule_desc: rule.describe(), segment: rule.segment, priority: rule.priority, nudge_id: rule.nudge };
+    }
+  }
+  return { rule_id: "R7", rule_desc: "fallback", segment: "Comportamiento financiero estable", priority: "Baja", nudge_id: "mantenimiento_positivo" };
+}
+
+/* ---------------------------------------------------------------------
+   6) RESPONSABILIDAD DE IA — rúbrica de sesgo / explicabilidad / dark pattern
+   ------------------------------------------------------------------- */
+const RESPONSIBLE_AI_RUBRIC = {
+  compromiso_pago_futuro: { explainability: 5, dark_pattern_risk:"bajo",
+    bias_note:"Este segmento puede correlacionar con income_band \"Bajo\" (uso de crédito revolvente más alto en el dataset). El nudge ofrece ayuda (pagar más, no menos) y es reversible, así que el riesgo de daño por sesgo es bajo — aun así, en producción se debería monitorear si la tasa de oferta de este nudge difiere por segmento socioeconómico sin justificación de riesgo real.",
+    conflict:"Pro-cliente: reduce el costo financiero del cliente (menos intereses), no genera ingreso adicional al banco." },
+  colchon_automatico_default: { explainability: 5, dark_pattern_risk:"bajo",
+    bias_note:"Señal basada en eventos objetivos (sobregiros/pagos tardíos), no en atributos demográficos. Bajo riesgo de sesgo indirecto si el umbral de sobregiro es el mismo para todos los clientes.",
+    conflict:"Pro-cliente: evita comisiones por sobregiro." },
+  reactivacion_un_clic: { explainability: 5, dark_pattern_risk:"bajo",
+    bias_note:"Basado en inactividad de una meta que el propio cliente creó. Sin proxy demográfico evidente.",
+    conflict:"Pro-cliente: ayuda a retomar una meta propia, no vende nada." },
+  resumen_cargos_recurrentes: { explainability: 5, dark_pattern_risk:"bajo",
+    bias_note:"Basado en conteo de altas/bajas de cargos recurrentes. Riesgo de sesgo bajo.",
+    conflict:"Pro-cliente: da visibilidad para que el cliente decida, no empuja una cancelación ni una compra." },
+  impulso_tramo_final: { explainability: 4, dark_pattern_risk:"bajo",
+    bias_note:"Basado en avance de una meta propia. Cuidado de diseño: no usar lenguaje de urgencia artificial para explotar el efecto de gradiente de meta.",
+    conflict:"Pro-cliente: acelera una meta que el cliente ya definió." },
+  activar_ahorro_opt_out: { explainability: 4, dark_pattern_risk:"medio",
+    bias_note:"Cambiar un default de opt-in a opt-out es una intervención legítima y bien documentada en la literatura, pero mueve dinero del cliente sin una acción explícita de su parte cada vez — requiere salida de un clic siempre visible y comunicación clara para no cruzar la línea hacia un dark pattern.",
+    conflict:"Mixto, con salvaguarda: pro-cliente en intención (fomenta ahorro propio), pero el mecanismo (opt-out) exige una salida fácil y visible para no ser coercitivo." },
+  mantenimiento_positivo: { explainability: 5, dark_pattern_risk:"bajo",
+    bias_note:"No activa ninguna decisión financiera del cliente, es un refuerzo informativo.",
+    conflict:"Neutral/pro-cliente: refuerzo positivo, no vende nada." }
+};
+const RESPONSIBLE_AI_ANTIPATTERNS = [
+  { label:"Ofrecer un seguro de protección de pagos de comisión alta a clientes con utilización de crédito ya alta",
+    explainability: 5, dark_pattern_risk:"alto",
+    bias_note:"El segmento (alta utilización, ya en tensión financiera) es precisamente el más vulnerable a una venta cruzada cara — aprovechar el sesgo de aversión a la pérdida (\"protégete de no poder pagar\") para vender un producto de comisión alta a quien menos puede pagarlo es un conflicto de interés directo.",
+    conflict:"Anti-cliente: genera ingreso al banco a costa de un cliente ya vulnerable. Debería bloquearse en el gate de aprobación, no solo marcarse." },
+  { label:"Usar lenguaje de urgencia (\"última oportunidad\", conteo regresivo) para vender un producto de inversión a clientes con heurística del afecto alta",
+    explainability: 4, dark_pattern_risk:"alto",
+    bias_note:"Explotar deliberadamente una reacción emocional detectada (en vez de mitigarla) para presionar una decisión financiera de mayor riesgo es el uso inverso de lo que este framework debería habilitar.",
+    conflict:"Anti-cliente: la urgencia artificial no reflaja ningún beneficio real y puede inducir una decisión de inversión no reflexionada." }
+];
+
+/* ---------------------------------------------------------------------
+   7) PORTAFOLIO DE INICIATIVAS (roadmap ilustrativo, pesos editables)
+   ------------------------------------------------------------------- */
+const INITIATIVES = [
+  { id:"in_01", title:"Reducir pago mínimo crónico en tarjeta de crédito", construct:"present_bias", impact:5, complexity:3, alignment:5,
+    description:"Compromiso de incremento de pago diferido para clientes en el segmento \"Deuda revolvente crónica\"." },
+  { id:"in_02", title:"Aumentar enrolamiento en ahorro automático (opt-out)", construct:"default_effect", impact:4, complexity:2, alignment:5,
+    description:"Cambiar el default de apartados programados y redondeo de opt-in a opt-out con salida de un clic." },
+  { id:"in_03", title:"Reactivar metas de ahorro dormidas", construct:"status_quo_bias", impact:3, complexity:2, alignment:4,
+    description:"Recordatorio de reactivación de un clic para metas sin movimiento por más de 90 días." },
+  { id:"in_04", title:"Detectar y frenar el \"gasto hormiga\" de suscripciones", construct:"salience_bias", impact:3, complexity:3, alignment:3,
+    description:"Resumen agregado mensual de cargos recurrentes nuevos, en vez de mostrarlos dispersos." },
+  { id:"in_05", title:"Reducir sobregiros recurrentes con colchón automático", construct:"loss_aversion", impact:5, complexity:3, alignment:5,
+    description:"Transferencia de respaldo automática configurable ante riesgo de saldo negativo." },
+  { id:"in_06", title:"Rediseñar el ancla de pago sugerido en el estado de cuenta", construct:"anchoring", impact:4, complexity:2, alignment:4,
+    description:"Mostrar un pago sugerido saludable antes que el mínimo legal, sin ocultar este último." },
+  { id:"in_07", title:"Simplificar el menú de productos de inversión", construct:"choice_overload", impact:3, complexity:4, alignment:3,
+    description:"Reducir el menú visible a 3 opciones curadas con acceso opcional al catálogo completo." },
+  { id:"in_08", title:"Programa piloto de \"candado de meta\" (commitment device)", construct:"commitment_devices", impact:3, complexity:4, alignment:3,
+    description:"Bloqueo parcial y voluntario de retiro anticipado para metas de largo plazo (vivienda, retiro)." },
+  { id:"in_09", title:"Momento de cierre celebratorio al completar una meta", construct:"peak_end_rule", impact:2, complexity:1, alignment:3,
+    description:"Reemplazar la notificación transaccional de \"meta completada\" por un cierre diseñado y memorable." }
+];
+
+/* ---------------------------------------------------------------------
+   8) AUTOSERVICIO — ensamblado de plantillas sin IA (para no-expertos)
+   ------------------------------------------------------------------- */
+const SELF_SERVICE_GOALS = [
+  { id:"reducir_deuda", label:"Reducir deuda de tarjeta de crédito", opener:"Queremos ayudarte a bajar el costo de tu deuda de tarjeta." },
+  { id:"aumentar_ahorro", label:"Aumentar ahorro automático", opener:"Queremos ayudarte a que ahorrar te cueste menos esfuerzo." },
+  { id:"reducir_sobregiro", label:"Reducir sobregiros", opener:"Queremos ayudarte a evitar quedarte en números rojos." },
+  { id:"reactivar_metas", label:"Reactivar metas de ahorro dormidas", opener:"Notamos que una meta tuya lleva tiempo sin movimiento." },
+  { id:"controlar_gasto_hormiga", label:"Controlar gasto en suscripciones", opener:"Aquí tienes un vistazo simple a tus cargos recurrentes." },
+  { id:"fortalecer_habito", label:"Fortalecer un hábito financiero ya positivo", opener:"Tu comportamiento financiero se ve saludable." }
+];
+const SELF_SERVICE_SEGMENTS = RULES.map(r => ({ id: r.id, label: r.segment }));
+
+function assembleSelfServiceNudge(goalId, segmentId, constructId) {
+  const goal = SELF_SERVICE_GOALS.find(g => g.id === goalId);
+  const seg = SELF_SERVICE_SEGMENTS.find(s => s.id === segmentId);
+  const construct = CONSTRUCT_BY_ID[constructId];
+  if (!goal || !seg || !construct) return null;
+  return {
+    title: `${goal.label} — segmento "${seg.label}"`,
+    body: `${goal.opener}\n\nConstructo de comportamiento aplicado: ${construct.name} (${construct.provenance}).\n\nPatrón de nudge sugerido: ${construct.nudge}\n\nProxy medible recomendado para validar impacto: ${construct.proxy}`,
+    note: "Plantilla generada por ensamblado determinístico de texto (sin llamada a IA). Revisar y ajustar el tono antes de usar con un cliente real."
+  };
+}
+
+/* =========================================================================
+   RENDER — navegación y secciones
+   ========================================================================= */
+const SECTIONS = [
+  { id:"resumen", label:"Resumen" },
+  { id:"biblioteca", label:"Biblioteca de sesgos" },
+  { id:"clientes", label:"Clientes sintéticos" },
+  { id:"responsable", label:"Responsabilidad de IA" },
+  { id:"portafolio", label:"Portafolio de iniciativas" },
+  { id:"autoservicio", label:"Autoservicio" },
+  { id:"config", label:"Configuración" }
+];
+let activeSection = "resumen";
+let selectedCustomerId = null;
+let aiResultByCustomer = {};
+let aiLoadingByCustomer = {};
+
+function renderNav() {
+  const nav = document.getElementById("nav");
+  nav.innerHTML = "";
+  SECTIONS.forEach((s, i) => {
+    const btn = document.createElement("button");
+    btn.className = activeSection === s.id ? "active" : "";
+    btn.innerHTML = `<span class="n">${i+1}</span>${s.label}`;
+    btn.onclick = () => { activeSection = s.id; renderNav(); renderMain(); };
+    nav.appendChild(btn);
+  });
+}
+
+function renderMain() {
+  const main = document.getElementById("main");
+  if (activeSection === "resumen") return renderResumen(main);
+  if (activeSection === "biblioteca") return renderBiblioteca(main);
+  if (activeSection === "clientes") return renderClientes(main);
+  if (activeSection === "responsable") return renderResponsable(main);
+  if (activeSection === "portafolio") return renderPortafolio(main);
+  if (activeSection === "autoservicio") return renderAutoservicio(main);
+  if (activeSection === "config") return renderConfig(main);
+}
+
+function disclaimerBar() {
+  return `<div class="disclaimer-bar"><b>Aviso:</b> todos los clientes, transacciones, señales e iniciativas de esta demo son 100% sintéticos/ficticios, creados con fines de portafolio para un proceso de entrevista. No representan a ningún cliente real ni a una metodología interna real de ningún banco. Nada aquí se conecta a un sistema de producción ni envía comunicaciones reales.</div>`;
+}
+
+/* ---- Resumen ---- */
+function renderResumen(main) {
+  const segmented = CUSTOMERS.map(c => ({ c, s: segmentCustomer(c) }));
+  const counts = { Alta:0, Media:0, Baja:0 };
+  segmented.forEach(x => counts[x.s.priority]++);
+  main.innerHTML = `
+    ${disclaimerBar()}
+    <div class="page-head">
+      <h1>Behavioral AI Studio</h1>
+      <p>Motor de segmentación conductual determinístico para banca (datos 100% sintéticos), con razonamiento de IA opcional y un panel de responsabilidad de IA integrado. Construido para demostrar, en la práctica, los siete pilares de un rol de Behavioral AI Lead.</p>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="v">${CONSTRUCTS.length}</div><div class="l">Constructos en la biblioteca</div></div>
+      <div class="kpi"><div class="v">${CUSTOMERS.length}</div><div class="l">Clientes sintéticos</div></div>
+      <div class="kpi"><div class="v alta">${counts.Alta}</div><div class="l">Prioridad Alta</div></div>
+      <div class="kpi"><div class="v media">${counts.Media}</div><div class="l">Prioridad Media</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Cómo mapea cada pieza a la vacante de Behavioral AI Lead</h2></div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Pieza de esta demo</th><th>Responsabilidad de la vacante que demuestra</th></tr></thead>
+          <tbody>
+            <tr><td>1. Biblioteca de sesgos</td><td>Transformar metodologías de comportamiento en herramientas y frameworks reutilizables</td></tr>
+            <tr><td>2-3. Dataset sintético + motor de segmentación</td><td>Integrar ciencias del comportamiento con Data Science: traducir constructos en variables y modelos analíticos</td></tr>
+            <tr><td>4. Panel de razonamiento de IA en vivo</td><td>Entendimiento de arquitectura de IA/LLMs aplicada a un caso de negocio real, con salvaguardas</td></tr>
+            <tr><td>5. Responsabilidad de IA</td><td>Definir criterios para evaluar soluciones de IA desde una perspectiva conductual: sesgo, explicabilidad, riesgo</td></tr>
+            <tr><td>6. Portafolio de iniciativas</td><td>Gestionar y priorizar el portafolio de Behavioral AI por impacto, complejidad y alineación estratégica</td></tr>
+            <tr><td>7. Autoservicio</td><td>Liderar formación y crear herramientas accesibles para la autonomía de equipos no expertos</td></tr>
+            <tr><td>Puente de negocio-tecnología-comportamiento</td><td>Actuar como puente entre negocio, tecnología, producto y comportamiento (rol transversal de toda la app)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Distribución de prioridad (motor determinístico actual)</h2><span class="hint">Cambia en vivo desde "Configuración"</span></div>
+      <div class="panel-body">
+        <table>
+          <thead><tr><th>Prioridad</th><th>Clientes</th><th>Reglas que la producen</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pill alta">Alta</span></td><td>${counts.Alta}</td><td>R1 (deuda revolvente crónica), R2 (riesgo de sobregiro)</td></tr>
+            <tr><td><span class="pill media">Media</span></td><td>${counts.Media}</td><td>R3 (meta abandonada), R4 (suscripciones crecientes), R5 (cerca de la meta)</td></tr>
+            <tr><td><span class="pill baja">Baja</span></td><td>${counts.Baja}</td><td>R6 (sin ahorro automático), R7 (estable — fallback)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+/* ---- Biblioteca de sesgos ---- */
+function renderBiblioteca(main) {
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Biblioteca de sesgos de comportamiento</h1>
+      <p>15 constructos de ciencias del comportamiento relevantes para banca minorista. Cada uno documenta: definición, procedencia académica ampliamente establecida, la variable proxy medible en datos de transacciones/comportamiento, y un patrón de nudge reutilizable. Este es el activo/framework reutilizable que la vacante pide construir.</p>
+    </div>
+    <div class="grid-cards" id="constructs-grid"></div>
+  `;
+  const grid = document.getElementById("constructs-grid");
+  CONSTRUCTS.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "construct-card";
+    div.innerHTML = `
+      <div class="cname">${c.name}</div>
+      <div class="provenance">${c.provenance}</div>
+      <div>${c.definition}</div>
+      <div class="row-label">Proxy medible</div>
+      <div class="row-value">${c.proxy}</div>
+      <div class="row-label">Patrón de nudge</div>
+      <div class="row-value">${c.nudge}</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+/* ---- Clientes sintéticos ---- */
+function renderClientes(main) {
+  const rows = CUSTOMERS.map(c => ({ c, s: segmentCustomer(c) }));
+  main.innerHTML = `
+    ${disclaimerBar()}
+    <div class="page-head">
+      <h1>Clientes sintéticos</h1>
+      <p>${CUSTOMERS.length} personas 100% ficticias con un historial de comportamiento fabricado pero plausible. El motor calcula de 3 a 5 señales de comportamiento por cliente con fórmulas documentadas, y asigna un segmento + nudge mediante reglas auditables (se muestra la regla exacta que se activó).</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Todos los clientes</h2><span class="hint">Clic en una fila para ver el detalle</span></div>
+      <table>
+        <thead><tr><th>Cliente</th><th>Edad</th><th>Ingreso</th><th>Segmento</th><th>Prioridad</th><th>Regla</th></tr></thead>
+        <tbody id="customers-tbody"></tbody>
+      </table>
+    </div>
+    <div id="customer-detail"></div>
+  `;
+  const tbody = document.getElementById("customers-tbody");
+  rows.forEach(({c,s}) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${c.first_name} ${c.last_name}</td><td>${c.age}</td><td>${c.income_band}</td><td>${s.segment}</td><td><span class="pill ${s.priority.toLowerCase()}">${s.priority}</span></td><td><span class="tag">${s.rule_id}</span></td>`;
+    tr.onclick = () => { selectedCustomerId = c.id; renderCustomerDetail(); };
+    tbody.appendChild(tr);
+  });
+  if (selectedCustomerId) renderCustomerDetail();
+}
+
+function renderCustomerDetail() {
+  const container = document.getElementById("customer-detail");
+  if (!container) return;
+  const customer = CUSTOMERS.find(c => c.id === selectedCustomerId);
+  if (!customer) { container.innerHTML = ""; return; }
+  const seg = segmentCustomer(customer);
+  const signals = computeSignals(customer.metrics);
+  const nudge = NUDGE_TEMPLATES[seg.nudge_id];
+  const rubric = RESPONSIBLE_AI_RUBRIC[seg.nudge_id];
+
+  const signalsHtml = signals.map(s => {
+    const c = CONSTRUCT_BY_ID[s.construct];
+    return `<div class="evidence-line"><div class="strength">${s.strength}</div><div class="body"><b>${c.name}</b><br><span class="ev">${s.evidence}</span><br><span class="small-note">fórmula: ${s.formula}</span></div></div>`;
+  }).join("");
+
+  const aiResult = aiResultByCustomer[customer.id];
+  const aiLoading = aiLoadingByCustomer[customer.id];
+  const aiSection = renderAiPanel(customer, seg, signals, aiResult, aiLoading);
+
+  container.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <h2>${customer.first_name} ${customer.last_name} <span class="tag">${customer.id}</span></h2>
+        <span class="hint">${customer.age} años · antigüedad ${customer.tenure_months} meses · ingreso ${customer.income_band}</span>
+      </div>
+      <div class="panel-body">
+        <div class="rule-fired">Regla activada: <code>${seg.rule_id}</code> — ${seg.rule_desc} → segmento <b>"${seg.segment}"</b>, prioridad <b>${seg.priority}</b>. Esta decisión es 100% determinística y auditable, no involucra ningún modelo de IA.</div>
+        <div class="two-col">
+          <div>
+            <h3 style="font-family:var(--font-head);font-size:13.5px;margin:0 0 8px;">Señales de comportamiento detectadas</h3>
+            ${signalsHtml}
+          </div>
+          <div>
+            <h3 style="font-family:var(--font-head);font-size:13.5px;margin:0 0 8px;">Nudge determinístico asignado</h3>
+            <div class="card">
+              <h3>${nudge.label}</h3>
+              <p>${nudge.text(customer.metrics)}</p>
+            </div>
+            <div class="small-note" style="margin-top:8px;">Explicabilidad de este nudge: ${rubric.explainability}/5 · Riesgo de dark pattern: <span class="risk-badge ${rubric.dark_pattern_risk}">${rubric.dark_pattern_risk}</span></div>
+          </div>
+        </div>
+        ${aiSection}
+      </div>
+    </div>
+  `;
+}
+
+function renderAiPanel(customer, seg, signals, aiResult, aiLoading) {
+  let inner = `<button class="btn ai" onclick="runLiveAiReasoning('${customer.id}')" ${aiLoading ? "disabled" : ""}>${aiLoading ? "Consultando a Claude…" : "Ejecutar razonamiento de IA en vivo (Claude)"}</button>
+    <span class="small-note" style="margin-left:10px;">Opcional. El segmento y la prioridad ya están decididos por el motor determinístico de arriba y no cambian con esto.</span>`;
+
+  if (aiResult) {
+    if (aiResult.error) {
+      inner += `<div class="ai-error">${aiResult.error}</div>`;
+    } else {
+      const r = aiResult.reasoning;
+      const claims = (r.claims || []).map(cl => `<div style="margin-bottom:6px;"><span class="${cl.type === 'FACT' ? 'fact-tag' : 'inference-tag'}">${cl.type}</span>${cl.text}</div>`).join("");
+      inner += `
+        <div class="ai-result">
+          <div><b>${r.segment_summary || ""}</b></div>
+          <div class="small-note" style="margin:4px 0 10px;">Constructo principal identificado por Claude: ${r.primary_construct || "—"}</div>
+          ${claims}
+          <div class="card" style="margin-top:10px;">
+            <h3>${(r.nudge_message && r.nudge_message.subject_or_title) || ""}</h3>
+            <p>${(r.nudge_message && r.nudge_message.body) || ""}</p>
+            <div class="small-note" style="margin-top:6px;">Canal: ${(r.nudge_message && r.nudge_message.channel) || "—"} · CTA: ${(r.nudge_message && r.nudge_message.cta_label) || "—"}</div>
+          </div>
+          <div class="small-note" style="margin-top:8px;"><b>Auto-chequeo de dark pattern (por Claude):</b> ${r.dark_pattern_self_check || "—"}</div>
+          <div class="meta-row">
+            <span>modelo: ${aiResult.meta.model}</span>
+            <span>tokens: ${aiResult.meta.total_tokens}</span>
+            <span>latencia: ${aiResult.meta.latency_ms} ms</span>
+            <span>costo estimado: $${aiResult.meta.estimated_cost_usd}</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+  return `<div class="panel" style="margin-top:16px;border:none;background:transparent;padding:0;"><div style="border-top:1px solid var(--line-solid);padding-top:14px;">${inner}</div></div>`;
+}
+
+async function runLiveAiReasoning(customerId) {
+  const customer = CUSTOMERS.find(c => c.id === customerId);
+  const seg = segmentCustomer(customer);
+  const signals = computeSignals(customer.metrics);
+  aiLoadingByCustomer[customerId] = true;
+  renderCustomerDetail();
+  try {
+    const res = await fetch("/.netlify/functions/behavioral-reasoning", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        customer: { id: customer.id, first_name: customer.first_name },
+        segment: seg.segment,
+        priority_tier: seg.priority,
+        fired_rule: seg.rule_id + ": " + seg.rule_desc,
+        signals: signals.map(s => ({ construct: CONSTRUCT_BY_ID[s.construct].name, strength: s.strength, evidence: s.evidence })),
+        raw_metrics: customer.metrics
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      aiResultByCustomer[customerId] = { error: data.error || `Error ${res.status} al llamar a la función.` };
+    } else {
+      aiResultByCustomer[customerId] = data;
+    }
+  } catch (e) {
+    aiResultByCustomer[customerId] = { error: "No se pudo contactar la función de IA en vivo (¿estás corriendo esto localmente sin `netlify dev`, o el sitio no tiene ANTHROPIC_API_KEY configurada?). El nudge determinístico de arriba sigue siendo válido." };
+  }
+  aiLoadingByCustomer[customerId] = false;
+  renderCustomerDetail();
+}
+
+/* ---- Responsabilidad de IA ---- */
+function renderResponsable(main) {
+  const rows = Object.entries(RESPONSIBLE_AI_RUBRIC).map(([nudgeId, r]) => {
+    const nudge = NUDGE_TEMPLATES[nudgeId];
+    return `<tr><td>${nudge.label}</td><td style="text-align:center;">${r.explainability}/5</td><td><span class="risk-badge ${r.dark_pattern_risk}">${r.dark_pattern_risk}</span></td><td>${r.bias_note}</td><td>${r.conflict}</td></tr>`;
+  }).join("");
+  const antiRows = RESPONSIBLE_AI_ANTIPATTERNS.map(a => `<tr><td>${a.label}</td><td style="text-align:center;">${a.explainability}/5</td><td><span class="risk-badge ${a.dark_pattern_risk}">${a.dark_pattern_risk}</span></td><td>${a.bias_note}</td><td>${a.conflict}</td></tr>`).join("");
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Responsabilidad de IA</h1>
+      <p>Rúbrica real (no decorativa) para evaluar cada nudge/intervención desde una perspectiva conductual, tal como pide la vacante: mitigación de sesgos, explicabilidad y riesgo de "dark pattern".</p>
+    </div>
+    <div class="grid-cards" style="margin-bottom:18px;">
+      <div class="card"><h3>1. Mitigación de sesgo</h3><p>¿El segmento o la señal que dispara el nudge correlaciona con un proxy de una característica protegida (edad, género, nivel socioeconómico)? Si sí, ¿el nudge ayuda o perjudica a ese grupo?</p></div>
+      <div class="card"><h3>2. Explicabilidad</h3><p>¿Puede una persona no técnica ver exactamente qué señal y qué regla produjeron esta decisión? Puntaje de 1 (caja negra) a 5 (regla legible en una frase).</p></div>
+      <div class="card"><h3>3. Riesgo de dark pattern</h3><p>¿El nudge empuja al cliente hacia MÁS ahorro / MENOS deuda (a favor del cliente), o hacia un producto que genera ingreso al banco a costa del cliente (conflicto de interés)?</p></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Nudges del motor determinístico (los 7 usados en esta demo)</h2></div>
+      <table>
+        <thead><tr><th>Nudge</th><th>Explicabilidad</th><th>Riesgo dark pattern</th><th>Nota de sesgo</th><th>¿A favor de quién?</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Ejemplos ilustrativos de anti-patrones (para mostrar que la rúbrica sí detecta problemas)</h2><span class="hint">Ninguno de estos está implementado en el motor — son ejemplos hipotéticos para ilustrar el criterio</span></div>
+      <table>
+        <thead><tr><th>Nudge hipotético</th><th>Explicabilidad</th><th>Riesgo dark pattern</th><th>Nota de sesgo</th><th>¿A favor de quién?</th></tr></thead>
+        <tbody>${antiRows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* ---- Portafolio de iniciativas ---- */
+function renderPortafolio(main) {
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Portafolio de iniciativas de Behavioral AI</h1>
+      <p>Priorización de un roadmap ilustrativo de 9 iniciativas por impacto, complejidad y alineación estratégica, con pesos editables en vivo.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Pesos de priorización</h2><span class="hint">Se aplican a: score = w_impacto×impacto + w_alineacion×alineación − w_complejidad×complejidad</span></div>
+      <div class="panel-body config-grid">
+        <div class="config-item"><label>Peso de impacto (${CONFIG.init_w_impact.toFixed(2)})</label><input type="range" min="0" max="1" step="0.05" value="${CONFIG.init_w_impact}" oninput="updateWeight('init_w_impact', this.value)"></div>
+        <div class="config-item"><label>Peso de alineación estratégica (${CONFIG.init_w_alignment.toFixed(2)})</label><input type="range" min="0" max="1" step="0.05" value="${CONFIG.init_w_alignment}" oninput="updateWeight('init_w_alignment', this.value)"></div>
+        <div class="config-item"><label>Peso de complejidad (penaliza) (${CONFIG.init_w_complexity.toFixed(2)})</label><input type="range" min="0" max="1" step="0.05" value="${CONFIG.init_w_complexity}" oninput="updateWeight('init_w_complexity', this.value)"></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head"><h2>Ranking priorizado</h2></div>
+        <table>
+          <thead><tr><th>#</th><th>Iniciativa</th><th>Impacto</th><th>Complejidad</th><th>Alineación</th><th>Score</th></tr></thead>
+          <tbody id="initiatives-tbody"></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Mapa Impacto × Complejidad</h2><span class="hint">tamaño = alineación</span></div>
+        <div class="panel-body">
+          <div class="scatter" id="scatter"></div>
+          <div class="small-note" style="margin-top:8px;">Eje X: complejidad (1-5, izquierda = más simple) · Eje Y: impacto (1-5, arriba = mayor impacto).</div>
+        </div>
+      </div>
+    </div>
+  `;
+  renderInitiativesRanking();
+  renderScatter();
+}
+
+function scoreInitiative(init) {
+  return CONFIG.init_w_impact*init.impact + CONFIG.init_w_alignment*init.alignment - CONFIG.init_w_complexity*init.complexity;
+}
+
+function renderInitiativesRanking() {
+  const tbody = document.getElementById("initiatives-tbody");
+  if (!tbody) return;
+  const ranked = [...INITIATIVES].map(i => ({ ...i, score: scoreInitiative(i) })).sort((a,b) => b.score - a.score);
+  tbody.innerHTML = ranked.map((i, idx) => `
+    <tr><td>${idx+1}</td><td><b>${i.title}</b><br><span class="small-note">${i.description}</span></td><td>${i.impact}</td><td>${i.complexity}</td><td>${i.alignment}</td><td><b>${i.score.toFixed(2)}</b></td></tr>
+  `).join("");
+}
+
+function renderScatter() {
+  const el = document.getElementById("scatter");
+  if (!el) return;
+  el.innerHTML = "";
+  const colors = ["#4C8DFF","#34D399","#F5B54C","#F0637A","#9CC0FF","#6C5CE7","#2ED8C3","#E08FE0","#FFB37A"];
+  INITIATIVES.forEach((init, idx) => {
+    const x = 8 + ((init.complexity-1)/4) * 82;
+    const y = 88 - ((init.impact-1)/4) * 78;
+    const size = 26 + init.alignment*7;
+    const b = document.createElement("div");
+    b.className = "bubble";
+    b.style.left = `calc(${x}% - ${size/2}px)`;
+    b.style.top = `calc(${y}% - ${size/2}px)`;
+    b.style.width = size+"px";
+    b.style.height = size+"px";
+    b.style.background = colors[idx % colors.length];
+    b.title = init.title;
+    b.textContent = idx+1;
+    el.appendChild(b);
+  });
+}
+
+function updateWeight(key, value) {
+  CONFIG[key] = parseFloat(value);
+  if (activeSection === "portafolio") renderPortafolio(document.getElementById("main"));
+}
+
+/* ---- Autoservicio ---- */
+function renderAutoservicio(main) {
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Autoservicio — construye un nudge sin necesitar a un experto</h1>
+      <p>Una persona de negocio sin conocimientos de ciencia de datos elige un objetivo, un segmento y un constructo de comportamiento, y la herramienta ensambla un borrador de nudge a partir de plantillas. Sin llamada a IA: es ensamblado determinístico de texto, para que esto escale sin depender de un especialista como cuello de botella.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-body">
+        <div class="two-col">
+          <div class="config-item"><label>1. Objetivo de negocio</label>
+            <select id="ss-goal">${SELF_SERVICE_GOALS.map(g => `<option value="${g.id}">${g.label}</option>`).join("")}</select>
+          </div>
+          <div class="config-item"><label>2. Segmento de cliente</label>
+            <select id="ss-segment">${SELF_SERVICE_SEGMENTS.map(s => `<option value="${s.id}">${s.label}</option>`).join("")}</select>
+          </div>
+        </div>
+        <div class="config-item" style="margin-top:12px;"><label>3. Constructo de comportamiento a aplicar</label>
+          <select id="ss-construct">${CONSTRUCTS.map(c => `<option value="${c.id}">${c.name}</option>`).join("")}</select>
+        </div>
+        <button class="btn" style="margin-top:14px;" onclick="buildSelfServiceNudge()">Ensamblar borrador de nudge</button>
+        <div id="ss-result"></div>
+      </div>
+    </div>
+  `;
+}
+
+function buildSelfServiceNudge() {
+  const goalId = document.getElementById("ss-goal").value;
+  const segmentId = document.getElementById("ss-segment").value;
+  const constructId = document.getElementById("ss-construct").value;
+  const result = assembleSelfServiceNudge(goalId, segmentId, constructId);
+  document.getElementById("ss-result").innerHTML = result ? `
+    <div class="assembled-box"><b>${result.title}</b>\n\n${result.body}</div>
+    <div class="small-note" style="margin-top:8px;">${result.note}</div>
+  ` : "";
+}
+
+/* ---- Configuración ---- */
+function renderConfig(main) {
+  main.innerHTML = `
+    <div class="page-head">
+      <h1>Configuración del motor</h1>
+      <p>Los umbrales y pesos del motor de segmentación son editables en vivo — esto demuestra que el sistema es configurable, no una lógica de scoring escondida y fija en el código.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Umbral mínimo de señal</h2></div>
+      <div class="panel-body config-grid">
+        <div class="config-item"><label>Fuerza mínima para mostrar una señal (0-100)</label><input type="number" min="0" max="100" value="${CONFIG.signal_strength_min}" onchange="updateConfigNum('signal_strength_min', this.value)"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Umbrales de las reglas de segmentación</h2></div>
+      <div class="panel-body config-grid">
+        <div class="config-item"><label>R1 — meses de pago mínimo</label><input type="number" value="${CONFIG.rule_min_payment_streak}" onchange="updateConfigNum('rule_min_payment_streak', this.value)"></div>
+        <div class="config-item"><label>R1 — utilización de crédito (%)</label><input type="number" value="${CONFIG.rule_credit_utilization}" onchange="updateConfigNum('rule_credit_utilization', this.value)"></div>
+        <div class="config-item"><label>R2 — sobregiros mínimos (90d)</label><input type="number" value="${CONFIG.rule_overdraft_events}" onchange="updateConfigNum('rule_overdraft_events', this.value)"></div>
+        <div class="config-item"><label>R3 — días de meta dormida</label><input type="number" value="${CONFIG.rule_dormant_days}" onchange="updateConfigNum('rule_dormant_days', this.value)"></div>
+        <div class="config-item"><label>R4 — neto de suscripciones nuevas</label><input type="number" value="${CONFIG.rule_subscription_net}" onchange="updateConfigNum('rule_subscription_net', this.value)"></div>
+        <div class="config-item"><label>R5 — % mínimo de avance de meta</label><input type="number" value="${CONFIG.rule_goal_progress_min}" onchange="updateConfigNum('rule_goal_progress_min', this.value)"></div>
+      </div>
+      <div class="panel-body" style="padding-top:0;">
+        <button class="btn secondary" onclick="renderConfigImpact()">Ver impacto en la distribución de clientes</button>
+        <div id="config-impact"></div>
+      </div>
+    </div>
+  `;
+  renderConfigImpact();
+}
+
+function updateConfigNum(key, value) {
+  CONFIG[key] = parseFloat(value);
+  renderConfigImpact();
+}
+
+function renderConfigImpact() {
+  const el = document.getElementById("config-impact");
+  if (!el) return;
+  const counts = {};
+  RULES.forEach(r => counts[r.id] = 0);
+  CUSTOMERS.forEach(c => { const s = segmentCustomer(c); counts[s.rule_id]++; });
+  el.innerHTML = `<table style="margin-top:12px;"><thead><tr><th>Regla</th><th>Segmento</th><th>Prioridad</th><th>Clientes que caen aquí ahora</th></tr></thead><tbody>
+    ${RULES.map(r => `<tr><td><span class="tag">${r.id}</span></td><td>${r.segment}</td><td><span class="pill ${r.priority.toLowerCase()}">${r.priority}</span></td><td><b>${counts[r.id]}</b></td></tr>`).join("")}
+  </tbody></table>`;
+}
+
+/* ---- Init ---- */
+renderNav();
+renderMain();
+</script>
+</body>
+</html>
