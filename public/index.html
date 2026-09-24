@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Behavioral AI Studio</title>
-<meta name="description" content="Demo de portafolio: motor de segmentación conductual determinístico + razonamiento de IA opcional para banca. Datos 100% sintéticos.">
+<title>Behavioral AI Studio — para BBVA (demo de portafolio)</title>
+<meta name="description" content="Demo de portafolio construida para la vacante de Behavioral AI Lead en BBVA: motor de segmentación conductual determinístico + razonamiento de IA opcional. Datos 100% sintéticos, no es un proyecto activo de BBVA.">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
@@ -15,34 +15,34 @@
    to feel at home in an internal analytics console.
 ------------------------------------------------------------------------- */
 :root {
-  --bg: #0B0F16;
-  --panel: #121826;
-  --panel-2: #1A2233;
-  --line: #26304485;
-  --line-solid: #26304485;
-  --text: #E7ECF5;
-  --muted: #90A0B7;
-  --muted-2: #64758C;
-  --accent: #4C8DFF;
-  --accent-dim: #1B2A4A;
-  --accent-text: #9CC0FF;
-  --good: #34D399;
-  --good-dim: #113328;
-  --warn: #F5B54C;
-  --warn-dim: #3A2E12;
-  --bad: #F0637A;
-  --bad-dim: #3A1620;
-  --tier-alta: #F0637A;
-  --tier-media: #F5B54C;
-  --tier-baja: #64758C;
+  --bg: #F4F6FA;
+  --panel: #FFFFFF;
+  --panel-2: #EEF1F7;
+  --line: #DCE2ED;
+  --line-solid: #DCE2ED;
+  --text: #101828;
+  --muted: #5B6472;
+  --muted-2: #8A93A3;
+  --accent: #1447E6;
+  --accent-dim: #E4ECFF;
+  --accent-text: #1447E6;
+  --good: #0F7A56;
+  --good-dim: #E3F7EF;
+  --warn: #92600A;
+  --warn-dim: #FDF1DA;
+  --bad: #B42318;
+  --bad-dim: #FCE4E2;
+  --tier-alta: #B42318;
+  --tier-media: #92600A;
+  --tier-baja: #5B6472;
+  --rail-bg: #0B1730;
+  --rail-panel: #16213D;
+  --rail-line: #223052;
+  --rail-text: #E7ECF5;
+  --rail-muted: #8A96AE;
   --font-head: 'Inter', sans-serif;
   --font-body: 'IBM Plex Sans', sans-serif;
   --font-mono: 'IBM Plex Sans', sans-serif;
-}
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #0B0F16; --panel: #121826; --panel-2: #1A2233; --text: #E7ECF5; --muted: #90A0B7;
-  }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -65,29 +65,29 @@ input, select, textarea { font-family: inherit; }
 /* --- Rail --- */
 .rail {
   width: 252px; flex-shrink: 0;
-  background: #0D1220; border-right: 1px solid var(--line-solid);
+  background: var(--rail-bg); border-right: 1px solid var(--rail-line);
   padding: 22px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
 }
-.rail-brand { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--text); display:flex; align-items:center; gap:8px; }
+.rail-brand { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--rail-text); display:flex; align-items:center; gap:8px; }
 .rail-brand .dot-logo { width: 9px; height: 9px; border-radius: 3px; background: var(--accent); display:inline-block; }
-.rail-sub { color: var(--muted); font-size: 11.5px; margin: 4px 0 14px; line-height: 1.4; }
+.rail-sub { color: var(--rail-muted); font-size: 11.5px; margin: 4px 0 14px; line-height: 1.4; }
 .rail-badge {
-  display: inline-flex; align-items: center; gap: 6px; background: var(--accent-dim); color: var(--accent-text);
+  display: inline-flex; align-items: center; gap: 6px; background: var(--rail-panel); color: #9CC0FF;
   font-size: 11px; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px;
 }
-.rail-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-text); }
-.rail-badge.synthetic { background: var(--warn-dim); color: var(--warn); }
-.rail-badge.synthetic::before { background: var(--warn); }
+.rail-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #9CC0FF; }
+.rail-badge.synthetic { background: #3A2E12; color: #F5B54C; }
+.rail-badge.synthetic::before { background: #F5B54C; }
 .rail nav { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; }
 .rail nav button {
-  all: unset; cursor: pointer; color: var(--muted); font-size: 13.3px; font-weight: 500;
+  all: unset; cursor: pointer; color: var(--rail-muted); font-size: 13.3px; font-weight: 500;
   padding: 9px 10px; border-radius: 6px; display: flex; align-items: center; gap: 9px;
 }
-.rail nav button:hover { background: var(--panel-2); color: var(--text); }
-.rail nav button.active { background: var(--panel-2); color: var(--text); box-shadow: inset 3px 0 0 var(--accent); }
-.rail nav button .n { width: 18px; height: 18px; border-radius: 5px; background: var(--panel-2); display:inline-flex; align-items:center; justify-content:center; font-size: 10.5px; font-weight:700; color: var(--muted); flex-shrink:0; }
-.rail nav button.active .n { background: var(--accent); color: #071022; }
-.rail-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line-solid); color: var(--muted-2); font-size: 10.8px; line-height: 1.5; }
+.rail nav button:hover { background: var(--rail-panel); color: var(--rail-text); }
+.rail nav button.active { background: var(--rail-panel); color: var(--rail-text); box-shadow: inset 3px 0 0 var(--accent); }
+.rail nav button .n { width: 18px; height: 18px; border-radius: 5px; background: var(--rail-panel); display:inline-flex; align-items:center; justify-content:center; font-size: 10.5px; font-weight:700; color: var(--rail-muted); flex-shrink:0; }
+.rail nav button.active .n { background: var(--accent); color: #fff; }
+.rail-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--rail-line); color: var(--rail-muted); font-size: 10.8px; line-height: 1.5; }
 
 /* --- Main --- */
 .main { flex: 1; min-width: 0; padding: 28px 36px 70px; max-width: 1240px; }
@@ -96,10 +96,10 @@ input, select, textarea { font-family: inherit; }
 .page-head p { color: var(--muted); margin: 0; max-width: 760px; font-size: 13px; }
 
 .disclaimer-bar {
-  background: var(--warn-dim); border: 1px solid #5C4A1F; color: var(--warn);
+  background: var(--warn-dim); border: 1px solid #F0D28A; color: var(--warn);
   border-radius: 8px; padding: 10px 14px; font-size: 12.3px; margin-bottom: 20px; line-height: 1.5;
 }
-.disclaimer-bar b { color: #FFD98A; }
+.disclaimer-bar b { color: #6B4A05; }
 
 /* --- KPI grid --- */
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
@@ -127,13 +127,13 @@ tbody tr:hover { background: var(--panel-2); }
 .pill { display: inline-flex; align-items: center; justify-content: center; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 650; }
 .pill.alta { background: var(--bad-dim); color: var(--tier-alta); }
 .pill.media { background: var(--warn-dim); color: var(--tier-media); }
-.pill.baja { background: #1B2432; color: var(--tier-baja); }
+.pill.baja { background: var(--panel-2); color: var(--tier-baja); }
 
 .tag { font-size: 11px; color: var(--muted); background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 4px; padding: 2px 7px; display: inline-block; }
 .chip { display:inline-flex; align-items:center; gap:5px; background: var(--panel-2); border:1px solid var(--line-solid); border-radius: 20px; padding: 3px 10px; font-size: 11.5px; color: var(--text); }
 .chip b { color: var(--accent-text); }
 
-.btn { all: unset; cursor: pointer; background: var(--accent); color: #071022; font-weight: 650; font-size: 12.8px; padding: 8px 14px; border-radius: 7px; display:inline-flex; align-items:center; gap:7px; }
+.btn { all: unset; cursor: pointer; background: var(--accent); color: #fff; font-weight: 650; font-size: 12.8px; padding: 8px 14px; border-radius: 7px; display:inline-flex; align-items:center; gap:7px; }
 .btn:hover { filter: brightness(1.08); }
 .btn.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line-solid); }
 .btn.ai { background: linear-gradient(135deg, #6C5CE7, #4C8DFF); color: #fff; }
@@ -163,8 +163,8 @@ tbody tr:hover { background: var(--panel-2); }
 .fact-tag { background: var(--good-dim); color: var(--good); }
 .inference-tag { background: var(--warn-dim); color: var(--warn); }
 
-.rule-fired { background: var(--accent-dim); border: 1px solid #2E4B85; border-radius: 8px; padding: 10px 12px; font-size: 12.4px; color: var(--accent-text); margin-bottom: 12px; }
-.rule-fired code { background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.rule-fired { background: var(--accent-dim); border: 1px solid #B9D0FF; border-radius: 8px; padding: 10px 12px; font-size: 12.4px; color: var(--accent-text); margin-bottom: 12px; }
+.rule-fired code { background: rgba(16,24,40,.07); padding: 1px 6px; border-radius: 4px; color: var(--text); }
 
 .field-row { display:flex; align-items:center; justify-content:space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-solid); font-size: 12.6px; }
 .field-row:last-child { border-bottom: none; }
@@ -188,7 +188,7 @@ select {
 
 .scatter { position: relative; width: 100%; height: 360px; background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 9px; overflow: hidden; }
 .scatter .axis-label { position:absolute; color: var(--muted); font-size: 11px; }
-.scatter .bubble { position:absolute; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 10px; font-weight: 700; color: #071022; cursor: default; border: 2px solid rgba(0,0,0,.25); }
+.scatter .bubble { position:absolute; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 10px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); cursor: default; border: 2px solid rgba(255,255,255,.55); }
 .scatter .gridline { position:absolute; background: var(--line-solid); }
 
 .hidden { display: none !important; }
@@ -200,11 +200,11 @@ select {
 
 .small-note { color: var(--muted-2); font-size: 11.3px; }
 
-.ai-result { background: #0F1522; border: 1px solid #2E3A55; border-radius: 9px; padding: 14px; margin-top: 12px; }
+.ai-result { background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 9px; padding: 14px; margin-top: 12px; }
 .ai-result .meta-row { display:flex; gap: 14px; flex-wrap:wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-solid); font-size: 11.3px; color: var(--muted); }
-.ai-error { background: var(--bad-dim); border: 1px solid #5C2532; color: var(--tier-alta); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-top: 10px; }
+.ai-error { background: var(--bad-dim); border: 1px solid #F3B4AE; color: var(--tier-alta); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; margin-top: 10px; }
 
-.assembled-box { background: #0F1522; border: 1px solid #2E3A55; border-radius: 9px; padding: 16px; margin-top: 14px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+.assembled-box { background: var(--panel-2); border: 1px solid var(--line-solid); border-radius: 9px; padding: 16px; margin-top: 14px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
 
 .progress-track { background: var(--panel); border-radius: 6px; height: 7px; overflow:hidden; margin-top: 5px; }
 .progress-fill { height: 100%; background: var(--accent); }
@@ -222,12 +222,12 @@ select {
 <div class="app">
   <aside class="rail">
     <div class="rail-brand"><span class="dot-logo"></span>Behavioral AI Studio</div>
-    <div class="rail-sub">Demo de portafolio para el rol de Behavioral AI Lead — no es un proyecto activo de ningún banco.</div>
+    <div class="rail-sub">Demo de portafolio construida para la vacante de <b style="color:var(--rail-text)">Behavioral AI Lead en BBVA</b> — no es un proyecto activo ni oficial de BBVA.</div>
     <div class="rail-badge synthetic">100% datos sintéticos</div>
     <div class="rail-badge">Motor determinístico + IA opcional</div>
     <nav id="nav"></nav>
     <div class="rail-foot">
-      Ningún dato de esta demo pertenece a un cliente real. Ver el panel "Responsabilidad de IA" y el README para el detalle de honestidad y arquitectura.
+      Ningún dato de esta demo pertenece a un cliente real de BBVA ni de ningún otro banco. Ver el panel "Responsabilidad de IA" y el README para el detalle de honestidad y arquitectura.
     </div>
   </aside>
   <main class="main" id="main"></main>
@@ -636,7 +636,7 @@ function renderMain() {
 }
 
 function disclaimerBar() {
-  return `<div class="disclaimer-bar"><b>Aviso:</b> todos los clientes, transacciones, señales e iniciativas de esta demo son 100% sintéticos/ficticios, creados con fines de portafolio para un proceso de entrevista. No representan a ningún cliente real ni a una metodología interna real de ningún banco. Nada aquí se conecta a un sistema de producción ni envía comunicaciones reales.</div>`;
+  return `<div class="disclaimer-bar"><b>Aviso:</b> todos los clientes, transacciones, señales e iniciativas de esta demo son 100% sintéticos/ficticios, creados con fines de portafolio para un proceso de entrevista con BBVA. No representan a ningún cliente real de BBVA ni a una metodología interna real de BBVA ni de ningún otro banco. Nada aquí se conecta a un sistema de producción ni envía comunicaciones reales.</div>`;
 }
 
 /* ---- Resumen ---- */
@@ -647,8 +647,8 @@ function renderResumen(main) {
   main.innerHTML = `
     ${disclaimerBar()}
     <div class="page-head">
-      <h1>Behavioral AI Studio</h1>
-      <p>Motor de segmentación conductual determinístico para banca (datos 100% sintéticos), con razonamiento de IA opcional y un panel de responsabilidad de IA integrado. Construido para demostrar, en la práctica, los siete pilares de un rol de Behavioral AI Lead.</p>
+      <h1>Behavioral AI Studio — construido para BBVA</h1>
+      <p>Pieza de portafolio para la vacante de <b>Behavioral AI Lead en BBVA</b>: un motor de segmentación conductual determinístico (datos 100% sintéticos), con razonamiento de IA opcional y un panel de responsabilidad de IA integrado. Cada pieza de esta app demuestra, en la práctica, uno de los siete pilares descritos en esa vacante — ver la tabla debajo.</p>
     </div>
     <div class="kpi-grid">
       <div class="kpi"><div class="v">${CONSTRUCTS.length}</div><div class="l">Constructos en la biblioteca</div></div>
