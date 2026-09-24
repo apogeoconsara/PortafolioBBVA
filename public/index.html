@@ -35,11 +35,11 @@
   --tier-alta: #B42318;
   --tier-media: #92600A;
   --tier-baja: #5B6472;
-  --rail-bg: #0B1730;
-  --rail-panel: #16213D;
-  --rail-line: #223052;
-  --rail-text: #E7ECF5;
-  --rail-muted: #8A96AE;
+  --rail-bg: #1464A5;
+  --rail-panel: #1F7DC4;
+  --rail-line: #3D8FCE;
+  --rail-text: #FFFFFF;
+  --rail-muted: #D6EAFB;
   --font-head: 'Inter', sans-serif;
   --font-body: 'IBM Plex Sans', sans-serif;
   --font-mono: 'IBM Plex Sans', sans-serif;
@@ -72,12 +72,12 @@ input, select, textarea { font-family: inherit; }
 .rail-brand .dot-logo { width: 9px; height: 9px; border-radius: 3px; background: var(--accent); display:inline-block; }
 .rail-sub { color: var(--rail-muted); font-size: 11.5px; margin: 4px 0 14px; line-height: 1.4; }
 .rail-badge {
-  display: inline-flex; align-items: center; gap: 6px; background: var(--rail-panel); color: #9CC0FF;
+  display: inline-flex; align-items: center; gap: 6px; background: var(--rail-panel); color: #FFFFFF;
   font-size: 11px; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px;
 }
-.rail-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #9CC0FF; }
-.rail-badge.synthetic { background: #3A2E12; color: #F5B54C; }
-.rail-badge.synthetic::before { background: #F5B54C; }
+.rail-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #FFFFFF; }
+.rail-badge.synthetic { background: #0E4C7D; color: #FFE7B0; }
+.rail-badge.synthetic::before { background: #FFE7B0; }
 .rail nav { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; }
 .rail nav button {
   all: unset; cursor: pointer; color: var(--rail-muted); font-size: 13.3px; font-weight: 500;
@@ -226,9 +226,6 @@ select {
     <div class="rail-badge synthetic">100% datos sintéticos</div>
     <div class="rail-badge">Motor determinístico + IA opcional</div>
     <nav id="nav"></nav>
-    <div class="rail-foot">
-      Ningún dato de esta demo pertenece a un cliente real de BBVA ni de ningún otro banco. Ver el panel "Responsabilidad de IA" y el README para el detalle de honestidad y arquitectura.
-    </div>
   </aside>
   <main class="main" id="main"></main>
 </div>
